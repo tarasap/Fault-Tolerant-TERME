@@ -14,7 +14,7 @@ The design combines:
 * **SECDED ECC** for protection of the architectural register file
 * RTL-level fault injection and simulation-based verification
 
-The architecture follows the general protection philosophy of the Hardisc safety-oriented RISC-V processor, while adapting the approach to the substantially shallower TERME pipeline. The protected design duplicates logic where disagreement can be detected before architectural state is affected, and triplicates logic where a corrupted result must be masked before reaching architectural state.
+The architecture follows the general protection philosophy of a safety-oriented RISC-V processor, while adapting the approach to the substantially shallower TERME pipeline. The protected design duplicates logic where disagreement can be detected before architectural state is affected, and triplicates logic where a corrupted result must be masked before reaching architectural state.
 
 ## Key Features
 
