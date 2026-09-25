@@ -2,7 +2,7 @@
 // Project Name:   Fault-Tolerant-TERME
 // File Name:      Pipe_Manager.v
 // Author:         Tara Sarpoolaki /Tarasarpoolaki@gmail.com
-// Last Modified:  2026-9-18
+// Last Modified:  2026-9-25
 // Description:    
 // 
 // License:        CERN-OHL-S-v2
@@ -146,7 +146,7 @@ module Pipe_Manager #(parameter size = 32)(
     output                              Mul_Signa1_o,
     output                              Mul_Signb1_o
 );
-
+    (* keep = 1, keep_hierarchy = 1 *)
     TERME_Controller #(.size(size)) ctrl0 (
         .clk                                (clk0),
         .rst                                (rst0),
@@ -216,7 +216,8 @@ module Pipe_Manager #(parameter size = 32)(
         .Mul_Signa_tc_o                     (Mul_Signa0_o),
         .Mul_Signb_tc_o                     (Mul_Signb0_o)
     );
-
+    
+    (* keep = 1, keep_hierarchy = 1 *)
     TERME_Controller #(.size(size)) ctrl1 (
         .clk                                (clk1),
         .rst                                (rst1),
