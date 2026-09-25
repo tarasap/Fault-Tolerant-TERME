@@ -19,7 +19,7 @@ module ECC_Corrector (
     
 
     always @(code, single_error,syndrome) begin
-        data_out = code [31 : 0];     // default
+        data_out = code [31 : 0];      
 
         if (single_error) begin
             case (syndrome)
