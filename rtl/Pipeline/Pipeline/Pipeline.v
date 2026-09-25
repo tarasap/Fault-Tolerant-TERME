@@ -251,6 +251,7 @@ module Pipeline #(parameter size = 32)(
         .instruction_dc_o           (instruction_dc)
     );
 
+    (* keep = 1, keep_hierarchy = 1 *)
     Frontend #(.size(size)) fe0 (
         .clk                        (clk0),
         .rst                        (rst0),
@@ -304,6 +305,7 @@ module Pipeline #(parameter size = 32)(
 
     assign PCSrc_0_o            = PCSrc_commit0;
 
+    (* keep = 1, keep_hierarchy = 1 *)
     Frontend #(.size(size)) fe1 (
         .clk                        (clk1),
         .rst                        (rst1),
@@ -382,7 +384,8 @@ module Pipeline #(parameter size = 32)(
         .data_in                    (writeback_result_voted),
         .codeword                   (encoded_writeback)
     );
-   
+
+    (* keep = 1, keep_hierarchy = 1 *)
     ECC_Decoder #(.size(size)) ecc1(
         .read_codeword              (read_codeword1),
         .syndrome                   (syndrome1),
@@ -390,20 +393,23 @@ module Pipeline #(parameter size = 32)(
         .double_error               (double_error1)
     );
     
+    (* keep = 1, keep_hierarchy = 1 *)
     ECC_Decoder #(.size(size)) ecc2(
         .read_codeword              (read_codeword2),
         .syndrome                   (syndrome2),
         .single_error               (single_error2),
         .double_error               (double_error2)
     );
-
+    
+    (* keep = 1, keep_hierarchy = 1 *)
     ECC_Corrector ECC_Corrector1 (
         .code                       (read_codeword1),
         .single_error               (single_error1),
         .syndrome                   (syndrome1),
         .data_out                   (read_data1)
     );
-
+    
+    (* keep = 1, keep_hierarchy = 1 *)
     ECC_Corrector ECC_Corrector2 (
         .code                       (read_codeword2),
         .single_error               (single_error2),
@@ -416,7 +422,7 @@ module Pipeline #(parameter size = 32)(
     wire       [size - 1 : 0] operand1_0;
     wire       [size - 1 : 0] operand2_0;
 
-    
+    (* keep = 1, keep_hierarchy = 1 *)
     ALU_Lane #(.size(size)) AL0 (
         .clk                        (clk0),
         .rst                        (rst0),
@@ -437,7 +443,7 @@ module Pipeline #(parameter size = 32)(
         .operand2_o                 (operand2_0)
     );
 
-    
+    (* keep = 1, keep_hierarchy = 1 *)
     Mul_Unit #(.size(size)) MUL_dex0(
         .clk                        (clk0),
         .rst                        (rst0),
@@ -457,6 +463,7 @@ module Pipeline #(parameter size = 32)(
     wire       [size - 1 : 0] operand1_1;
     wire       [size - 1 : 0] operand2_1;
 
+    (* keep = 1, keep_hierarchy = 1 *)
     ALU_Lane #(.size(size)) AL1 (
         .clk                        (clk1),
         .rst                        (rst1),
@@ -477,6 +484,7 @@ module Pipeline #(parameter size = 32)(
         .operand2_o                 (operand2_1)
     );
 
+    (* keep = 1, keep_hierarchy = 1 *)
     Mul_Unit #(.size(size)) MUL_dex1(
         .clk                        (clk1),
         .rst                        (rst1),
@@ -584,7 +592,8 @@ module Pipeline #(parameter size = 32)(
             OPCode_mwb_0_o
         })
     );
-
+    
+    (* keep = 1, keep_hierarchy = 1 *)
     Backend #(.size(size)) be0 (
         .ResultSrc_i                (ResultSrc_mwb0_o),
         .Mul_Sel_i                  (Mul_Sel0_mwb),
@@ -599,7 +608,8 @@ module Pipeline #(parameter size = 32)(
         .Writeback_Result_o         (Writeback_Result_mwb0),
         .CSR_Wdata_o                (CSR_Wdata_mwb0)
     );
-
+    
+    (* keep = 1, keep_hierarchy = 1 *)
     Backend #(.size(size)) be1 (
         .ResultSrc_i                (ResultSrc_mwb1_o),
         .Mul_Sel_i                  (Mul_Sel1_mwb),
@@ -615,6 +625,7 @@ module Pipeline #(parameter size = 32)(
         .CSR_Wdata_o                (CSR_Wdata_mwb1)
     );
 
+    (* keep = 1, keep_hierarchy = 1 *)
     Backend #(.size(size)) be2 (
         .ResultSrc_i                (ResultSrc_mwb0_o),
         .Mul_Sel_i                  (Mul_Sel0_mwb),
