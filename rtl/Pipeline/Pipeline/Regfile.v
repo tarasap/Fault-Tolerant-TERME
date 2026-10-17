@@ -39,11 +39,10 @@ module Regfile (
                 register[Read_Reg3_i] <= Write_Data_i;
         end
     end
-zz
 
     always @(posedge clk) begin
-    if (RegWrite_i && (Read_Reg3_i != 0)) begin
-        registers[Read_Reg3_i] <= Write_Data_i;
+    if (Regwrite_i && (Read_Reg3_i != 0)) begin
+        register[Read_Reg3_i] <= Write_Data_i;
 
     end
 end

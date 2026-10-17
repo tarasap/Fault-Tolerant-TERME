@@ -2,7 +2,7 @@
 // Project Name:   Fault-Tolerant-TERME
 // File Name:      TERME_Protected.v
 // Author:         Tara Sarpoolaki /Tarasarpoolaki@gmail.com
-// Last Modified:  2026-9-18
+// Last Modified:  2026-10-11
 // Description:    
 // 
 // License:        CERN-OHL-S-v2
@@ -10,17 +10,18 @@
 
 `timescale 1ns / 1ps
 
-module TERME_Protected #(parameter size = 32)(
+module TERME_Protected_presynth #(parameter size = 32)(
     input                           clk0,
     input                           rst0,
     input                           clk1,
     input                           rst1,
 
-    input                           DMem_Interface_Req_Ready_i,
     input                           Irq_Timer_i,
     input                           Irq_Ext_i,
     input                           Irq_software_i,
 
+    input                           DMem_Interface_Req_Ready_i,
+    input  [size - 1 : 0]           DMem_Interface_Data_i,
     input                           Imem_Interface_Valid_i,
     input  [size - 1 : 0]           Imem_Interface_Data_i, 
     output                          Imem_Interface_Req_o,
@@ -32,8 +33,6 @@ module TERME_Protected #(parameter size = 32)(
     output                          DMem_Interface_Req_Valid_o,
     output [size - 1 : 0]           DMem_Interface_Data_o,
     output [size - 1 : 0]           DMem_Interface_Addr_o,
-
-    input  [size - 1 : 0]           DMem_Interface_Data_i,
 
     output                          mismatch_o
 );
