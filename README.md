@@ -175,8 +175,108 @@ Run testbench
    recovery and masking
 ```
 
-## Status
+# Fault Injection Results
 
-**Current status:** RTL implementation and simulation-based validation.
+## 1. SEU Detection and Masking in a Fault-Tolerant RISC-V Core
 
-The repository is being developed as a research-oriented hardware project for studying fault-tolerant RISC-V processor architectures.
+## Overview
+
+This section describes the SEU (single-event upset) fault-injection monitor added to the testbench of the fault-tolerant RISC-V core, and the results of single-bit injections on each protected stage.
+
+The core combines three protection mechanisms:
+
+| Mechanism | Scope | Monitored signal |
+|-----------|-------|------------------|
+| DMR (front-end) | Fetch / decode | `mismatch_fe` |
+| DMR + TMR (memory/writeback) | MWB stage | `mismatch_mwb`, voted vs. per-lane results |
+| ECC (SEC-DED, 39-bit codewords) | Register file read | `single_error{1,2}`, `double_error{1,2}`, `syndrome{1,2}` |
+
+## Fault-Injection Infrastructure
+
+The monitor is added at the end of the testbench and provides:
+
+- **Event counters**: DMR_FE, DMR_MWB, TMR masked, ECC SEC, ECC DED, and data-memory write count.
+- **Write trace**: every data-memory write (`index addr data wstrb`) is logged to `golden_writes.trace` (with `+GOLDEN_RUN`) or `faulty_writes.trace` (otherwise), so runs can be diffed for silent data corruption.
+- **Fault injector**: a single-bit flip applied with `force`/`release` at a chosen cycle, bit, and duration.
+- **End-of-run summary**: printed when the benchmark writes to the SIMEND address.
+
+### Injection targets
+
+| ID | Signal | Width | Protecting mechanism |
+|----|--------|-------|----------------------|
+| 1 | `PC_Out_dex0` | 32 | DMR (front-end) |
+| 2 | `Instruction_dex0` | 32 | DMR (front-end) |
+| 3 | `Alu_Result_al0` | 32 | DMR (MWB) |
+| 4 | `Writeback_Result_mwb0` | 32 | TMR |
+| 5 | `Writeback_Result_mwb2` | 32 | TMR |
+| 6 | `Alu_Result_mwb2` | 32 | TMR |
+| 7 | `read_codeword1` | 39 (ECC codeword) | ECC (SEC-DED) |
+
+### Plusargs
+
+| Plusarg | Default | Meaning |
+|---------|---------|---------|
+| `+GOLDEN_RUN` | off | Run without injection, write the golden trace |
+| `+FI_TARGET=<id>` | 4 | Injection target (table above) |
+| `+FI_CYCLE=<n>` | 1000 | Cycle of injection |
+| `+FI_BIT=<n>` | 0 | Bit position to flip |
+| `+FI_DUR=<n>` | 1 | Duration in cycles before release |
+
+Example:
+
+```
+vsim ... +FI_TARGET=7 +FI_CYCLE=1200 +FI_BIT=12 +FI_DUR=1
+```
+
+## Results
+
+**Workload:** CoreMark, 2K performance run, 1 iteration, `rv32ic_zicsr_zmmul`, `-O3`.
+Each run injects a single-bit flip for 1 cycle on one target.
+
+| Target | Signal | Mechanism | Triggered counter | Count | Outcome |
+|--------|--------|-----------|-------------------|-------|---------|
+| 1 | `PC_Out_dex0` | DMR (FE) | `DMR_FE_DETECTED` | 1 | Detected |
+| 2 | `Instruction_dex0` | DMR (FE) | `DMR_FE_DETECTED` | 1 | Detected |
+| 3 | `Alu_Result_al0` | DMR (MWB) | `DMR_MWB_DETECTED` | 1 | Detected |
+| 4 | `Writeback_Result_mwb0` | TMR | `TMR_MASKED` | 1 | Masked by voter |
+| 5 | `Writeback_Result_mwb2` | TMR | `TMR_MASKED` | 1 | Masked by voter |
+| 6 | `Alu_Result_mwb2` | TMR | `TMR_MASKED` | 1 | Masked by voter |
+| 7 | `read_codeword1` | ECC | `ECC_SEC_MASKED` | 1 | Corrected (single-bit) |
+
+In every run, the mechanism that protects the injected stage was the one that responded, with exactly one event each. DMR flags a mismatch between the two copies, TMR outvotes the faulty lane, and ECC corrects a single-bit error using the syndrome.
+
+### Target 7 detail (ECC)
+
+**Configuration:** target 7 (`read_codeword1`), cycle 1200, bit 12, duration 1 cycle.
+
+```
+FI_INJ: C=1200 Inject Target=7 Bit=12 Dur=1
+FI_MON: C=1200 ECC_SEC Syn1=12 Syn2=00
+FI_INJ: C=1201 Fault Released
+```
+
+| Metric | Value |
+|--------|-------|
+| Exit code | 1 |
+| Total cycles | 761,623 |
+| Total data-memory writes | 18,057 |
+| DMR_FE detected | 0 |
+| DMR_MWB detected | 0 |
+| TMR masked | 0 |
+| **ECC SEC corrected** | **1** |
+| ECC DED (uncorrectable) | 0 |
+
+The flip was flagged in the same cycle it was injected (`Syn1=0x12`), and port 2 stayed clean (`Syn2=0x00`). No double-error was reported, which matches a single-bit upset.
+
+## Notes
+
+- The counters show which mechanism **responded** to the fault. They do not by themselves prove the program output stayed correct. To confirm that, compare each faulty run against the golden run:
+
+```
+  vsim ... +GOLDEN_RUN
+  vsim ... +FI_TARGET=<id> +FI_CYCLE=<n> +FI_BIT=<n> +FI_DUR=1
+  diff golden_writes.trace faulty_writes.trace
+```
+
+- The target 7 run exited with code 1 and CoreMark printed `Errors detected`. Run the golden run and check its exit code first: if it also exits with 1, the error comes from the benchmark setup and not from the injected fault.
+
