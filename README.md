@@ -266,17 +266,6 @@ FI_INJ: C=1201 Fault Released
 | **ECC SEC corrected** | **1** |
 | ECC DED (uncorrectable) | 0 |
 
-The flip was flagged in the same cycle it was injected (`Syn1=0x12`), and port 2 stayed clean (`Syn2=0x00`). No double-error was reported, which matches a single-bit upset.
 
-## Notes
 
-- The counters show which mechanism **responded** to the fault. They do not by themselves prove the program output stayed correct. To confirm that, compare each faulty run against the golden run:
-
-```
-  vsim ... +GOLDEN_RUN
-  vsim ... +FI_TARGET=<id> +FI_CYCLE=<n> +FI_BIT=<n> +FI_DUR=1
-  diff golden_writes.trace faulty_writes.trace
-```
-
-- The target 7 run exited with code 1 and CoreMark printed `Errors detected`. Run the golden run and check its exit code first: if it also exits with 1, the error comes from the benchmark setup and not from the injected fault.
 
