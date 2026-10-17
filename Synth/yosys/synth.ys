@@ -1,0 +1,72 @@
+read_verilog src/Backend.v
+read_verilog src/ALU.v
+read_verilog src/ALU_Lane.v
+read_verilog src/ALU_Decoder.v
+read_verilog src/Branch_Unit.v
+read_verilog src/Memory_WriteBack.v
+read_verilog src/Frontend.v
+read_verilog src/ECC_Decoder.v
+read_verilog src/CSRs.v
+read_verilog src/CSR_Controller.v
+read_verilog src/ECC_Encoder.v
+read_verilog src/TERME_Protected.v
+read_verilog src/Decode_Execute.v
+read_verilog src/Decompressor.v
+read_verilog src/Decoder2.v
+read_verilog src/Decoder1.v
+read_verilog src/Hazard_Unit.v
+read_verilog src/Instruction_Load_Unit.v
+read_verilog src/Sign_Extension.v
+read_verilog src/ECC_Corrector.v
+read_verilog src/TERME_Controller.v
+read_verilog src/Load_Store_Unit.v
+read_verilog src/Zmmul_Decoder.v
+read_verilog src/Mul_Unit.v
+read_verilog src/Regfile.v
+read_verilog src/FE_Comparator.v
+read_verilog src/Majority_Voter.v
+read_verilog src/Mux_2.v
+read_verilog src/Mux_3.v
+read_verilog src/Mux_4.v
+read_verilog src/RP_Register.v
+read_verilog src/Reg.v
+read_verilog src/Pipe_Register.v
+read_verilog src/Pipeline.v
+read_verilog src/Pipe_Manager.v
+
+
+hierarchy -check -top TERME_Protected
+
+# Protect redundant blocks: they survive flatten, opt_merge and ABC
+setattr -mod -set keep 1 TERME_Controller Frontend Backend ALU_Lane \
+        ECC_Corrector ECC_Decoder ECC_Encoder Mul_Unit Majority_Voter
+setattr -mod -set keep_hierarchy 1 TERME_Controller Frontend Backend ALU_Lane \
+        ECC_Corrector ECC_Decoder ECC_Encoder Mul_Unit Majority_Voter
+
+synth -top TERME_Protected
+flatten       # flattens everything except keep_hierarchy modules
+
+read_liberty -lib cell/stdcell.lib 
+dfflibmap -liberty cell/stdcell.lib 
+
+abc -liberty cell/stdcell.lib 
+
+opt -full
+clean
+
+select -list t:Frontend
+select -list t:Backend
+select -list t:TERME_Controller
+select -list t:ALU_Lane
+select -list t:ECC_Corrector
+select -list t:ECC_Decoder
+select -list t:ECC_Encoder
+select -list t:Mul_Unit
+select -list t:Majority_Voter
+
+tee -o report.txt stat -liberty cell\stdcell.lib
+
+#setundef -zero
+setundef -zero
+write_verilog -noattr TERME_Protected.v
+stat -liberty cell/stdcell.lib -top TERME_Protected
